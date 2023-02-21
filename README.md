@@ -1,6 +1,6 @@
 # react-native-fast-base64
 
-"Just another native implementaion of Base64 in C++ for React Native"
+Just another native implementation of Base64 in C++ for React-Native. Inspired and enhanced from @craftzdog/eact-native-quick-base64
 
 ## Installation
 
@@ -11,11 +11,12 @@ npm install react-native-fast-base64
 ## Usage
 
 ```js
-import { multiply } from 'react-native-fast-base64';
+import { encode, decode } from 'react-native-fast-base64';
 
 // ...
 
-const result = await multiply(3, 7);
+const encoded = encode('Hello, world!');
+const decoded = decode(encoded);
 ```
 
 ## Contributing

@@ -1,18 +1,39 @@
 #import "FastBase64.h"
+#import <React/RCTBridge+Private.h>
+#import <React/RCTUtils.h>
+#import <jsi/jsi.h>
+#import "react-native-fast-base64.h"
+
+using namespace facebook;
 
 @implementation FastBase64
+
+@synthesize bridge = _bridge;
+@synthesize methodQueue = _methodQueue;
+
 RCT_EXPORT_MODULE()
 
-// Example method
-// See // https://reactnative.dev/docs/native-modules-ios
-RCT_REMAP_METHOD(multiply,
-                 multiplyWithA:(double)a withB:(double)b
-                 withResolver:(RCTPromiseResolveBlock)resolve
-                 withRejecter:(RCTPromiseRejectBlock)reject)
++ (BOOL)requiresMainQueueSetup
 {
-    NSNumber *result = @(fastbase64::multiply(a, b));
+    return YES;
+}
 
-    resolve(result);
+RCT_EXPORT_BLOCKING_SYNCHRONOUS_METHOD(install)
+{
+    RCTBridge* bridge = [RCTBridge currentBridge];
+    RCTCxxBridge* cxxBridge = (RCTCxxBridge*)bridge;
+    if (cxxBridge == nil) {
+        return nil;
+    }
+
+    auto jsiRuntime = (jsi::Runtime*) cxxBridge.runtime;
+    if (jsiRuntime == nil) {
+        return nil;
+    }
+
+    fastbase64::install(*(facebook::jsi::Runtime *)jsiRuntime);
+    
+    return nil;
 }
 
 // Don't compile this code when we build for the old architecture.

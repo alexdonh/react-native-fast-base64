@@ -1,8 +1,14 @@
 #ifndef FASTBASE64_H
 #define FASTBASE64_H
 
+namespace facebook {
+  namespace jsi {
+    class Runtime;
+  }
+}
+
 namespace fastbase64 {
-  double multiply(double a, double b);
+  void install(facebook::jsi::Runtime& jsiRuntime);
 }
 
 #endif /* FASTBASE64_H */

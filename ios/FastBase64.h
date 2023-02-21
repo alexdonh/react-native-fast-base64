@@ -12,4 +12,6 @@
 @interface FastBase64 : NSObject <RCTBridgeModule>
 #endif
 
+@property (nonatomic, assign) BOOL setBridgeOnMainQueue;
+
 @end
