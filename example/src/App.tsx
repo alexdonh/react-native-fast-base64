@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { StyleSheet, View, TextInput } from 'react-native';
 import { encode, decode } from 'react-native-fast-base64';
@@ -10,31 +10,43 @@ export default function App() {
 
   const onInputChange = (text: string) => {
     setInput(text);
-  }
+  };
 
   const onOutputChange = (text: string) => {
     setOutput(text);
-  }
+  };
 
   useEffect(() => {
     if (currentFocus === 'input') {
       setOutput(encode(input));
     }
-  }, [input]);
+  }, [input]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (currentFocus === 'output') {
       setInput(decode(output));
     }
-  }, [output]);
+  }, [output]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <View style={styles.container}>
       <View style={styles.textInputContainer}>
-        <TextInput style={styles.textInput} value={input} onChangeText={onInputChange} onFocus={() => setCurrentFocus('input')} multiline={true}></TextInput>
+        <TextInput
+          style={styles.textInput}
+          value={input}
+          onChangeText={onInputChange}
+          onFocus={() => setCurrentFocus('input')}
+          multiline={true}
+        />
       </View>
       <View style={styles.textInputContainer}>
-        <TextInput style={styles.textInput} value={output} onChangeText={onOutputChange} onFocus={() => setCurrentFocus('output')} multiline={true}></TextInput>
+        <TextInput
+          style={styles.textInput}
+          value={output}
+          onChangeText={onOutputChange}
+          onFocus={() => setCurrentFocus('output')}
+          multiline={true}
+        />
       </View>
     </View>
   );
@@ -45,12 +57,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20
+    padding: 20,
   },
   textInputContainer: {
     flex: 1,
     flexDirection: 'row',
-    margin: 20
+    margin: 20,
   },
   textInput: {
     textAlignVertical: 'top',

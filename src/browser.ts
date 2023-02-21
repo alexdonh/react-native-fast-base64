@@ -1,4 +1,4 @@
-import {encode, decode} from '.';
+import { encode, decode } from '.';
 
 (global as any).btoa = decode;
 (global as any).atob = encode;

@@ -30,7 +30,9 @@ export function isLoaded() {
 if (!isLoaded()) {
   NativeModules.FastBase64?.install?.();
   if (!isLoaded()) {
-    throw new Error('JSI bindings were not installed for react-native-fast-base64 module');
+    throw new Error(
+      'JSI bindings were not installed for react-native-fast-base64 module'
+    );
   }
 }
 
