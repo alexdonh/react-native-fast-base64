@@ -9,6 +9,7 @@
     "pods": "cd ios && pod install && cd .."
   },
   "dependencies": {
+    "buffer": "^6.0.3",
     "react": "18.2.0",
     "react-native": "0.71.3",
     "react-native-fast-base64": "link:../"

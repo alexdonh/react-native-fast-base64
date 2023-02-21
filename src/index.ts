@@ -6,9 +6,6 @@ import { NativeModules } from 'react-native';
 //   '- You rebuilt the app after installing the package\n' +
 //   '- You are not using Expo Go\n';
 
-type FastBase64EncodeFunc = (s: string) => string;
-type FastBase64DecodeFunc = (s: string) => string;
-
 // const FastBase64 = NativeModules.FastBase64
 //   ? NativeModules.FastBase64
 //   : new Proxy(
@@ -20,8 +17,10 @@ type FastBase64DecodeFunc = (s: string) => string;
 //       }
 //     );
 
-declare const FastBase64Encode: FastBase64EncodeFunc;
-declare const FastBase64Decode: FastBase64DecodeFunc;
+declare const FastBase64FromArrayBuffer: (buf: ArrayBuffer) => string;
+declare const FastBase64ToArrayBuffer: (s: string) => ArrayBuffer;
+declare const FastBase64Encode: (s: string) => string;
+declare const FastBase64Decode: (s: string) => string;
 
 export function isLoaded() {
   return typeof FastBase64Encode === 'function';
@@ -42,4 +41,17 @@ export function encode(s: string) {
 
 export function decode(s: string) {
   return FastBase64Decode(s);
+}
+
+export function fromByteArray(buf: Uint8Array) {
+  if (buf.buffer.byteLength > buf.byteLength || buf.byteOffset > 0) {
+    return FastBase64FromArrayBuffer(
+      buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+    );
+  }
+  return FastBase64FromArrayBuffer(buf.buffer);
+}
+
+export function toByteArray(s: string) {
+  return new Uint8Array(FastBase64ToArrayBuffer(s));
 }

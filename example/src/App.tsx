@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
-
 import { StyleSheet, View, TextInput } from 'react-native';
-import { encode, decode } from 'react-native-fast-base64';
+import { Buffer } from 'buffer';
+import {
+  encode,
+  decode,
+  fromByteArray,
+  toByteArray,
+} from 'react-native-fast-base64';
 
 export default function App() {
   const [input, setInput] = useState('');
@@ -30,6 +35,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      {/* decode */}
       <View style={styles.textInputContainer}>
         <TextInput
           style={styles.textInput}
@@ -39,11 +45,32 @@ export default function App() {
           multiline={true}
         />
       </View>
+      {/* encode */}
       <View style={styles.textInputContainer}>
         <TextInput
           style={styles.textInput}
           value={output}
           onChangeText={onOutputChange}
+          onFocus={() => setCurrentFocus('output')}
+          multiline={true}
+        />
+      </View>
+      {/* fromByteArray */}
+      <View style={styles.textInputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={fromByteArray(Buffer.from(input))}
+          editable={false}
+          onFocus={() => setCurrentFocus('output')}
+          multiline={true}
+        />
+      </View>
+      {/* toByteArray */}
+      <View style={styles.textInputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={JSON.stringify(toByteArray(output))}
+          editable={false}
           onFocus={() => setCurrentFocus('output')}
           multiline={true}
         />
