@@ -19,7 +19,6 @@ namespace fastbase64 {
         return jsi::Value(runtime, jsi::String::createFromUtf8(runtime, ret));
       }
     );
-    jsiRuntime.global().setProperty(jsiRuntime, "FastBase64Encode", std::move(encode));
 
     auto decode = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -30,7 +29,6 @@ namespace fastbase64 {
         return jsi::Value(runtime, jsi::String::createFromUtf8(runtime, ret));
       }
     );
-    jsiRuntime.global().setProperty(jsiRuntime, "FastBase64Decode", std::move(decode));
 
     auto fromArrayBuffer = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -50,7 +48,6 @@ namespace fastbase64 {
         return jsi::Value(runtime, jsi::String::createFromUtf8(runtime, ret));
       }
     );
-    jsiRuntime.global().setProperty(jsiRuntime, "FastBase64FromArrayBuffer", std::move(fromArrayBuffer));
 
     auto toArrayBuffer = jsi::Function::createFromHostFunction(
       jsiRuntime,
@@ -65,6 +62,13 @@ namespace fastbase64 {
         return o;
       }
     );
-    jsiRuntime.global().setProperty(jsiRuntime, "FastBase64ToArrayBuffer", std::move(toArrayBuffer));
+
+    auto FastBase64 = jsi::Object(jsiRuntime);
+    FastBase64.setProperty(jsiRuntime, "encode", std::move(encode));
+    FastBase64.setProperty(jsiRuntime, "decode", std::move(decode));
+    FastBase64.setProperty(jsiRuntime, "fromArrayBuffer", std::move(fromArrayBuffer));
+    FastBase64.setProperty(jsiRuntime, "toArrayBuffer", std::move(toArrayBuffer));
+
+    jsiRuntime.global().setProperty(jsiRuntime, "FastBase64", FastBase64);
   }
 }
