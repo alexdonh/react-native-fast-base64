@@ -1,10 +1,9 @@
 {
   "name": "react-native-fast-base64",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Just another native implementation of Base64 in C++ for React-Native. Inspired and enhanced from @craftzdog/eact-native-quick-base64",
   "main": "lib/commonjs/index",
   "module": "lib/module/index",
-  "browser": "lib/commonjs/browser",
   "types": "lib/typescript/index.d.ts",
   "react-native": "src/index",
   "source": "src/index",
@@ -27,6 +26,16 @@
     "!**/__mocks__",
     "!**/.*"
   ],
+  "exports": {
+    ".": {
+      "require": "./lib/commonjs/index",
+      "import": "./lib/module/index"
+    },
+    "./shim": {
+      "require": "./lib/commonjs/shim",
+      "import": "./lib/module/shim"
+    }
+  },
   "scripts": {
     "test": "jest",
     "typecheck": "tsc --noEmit",
