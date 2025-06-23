@@ -1,9 +1,9 @@
 import { NativeModules } from 'react-native';
 
 declare const FastBase64: {
-  encode: (s: string) => string;
+  encode: (s: string, urlSafe?: boolean) => string;
   decode: (s: string) => string;
-  fromArrayBuffer: (buf: ArrayBuffer) => string;
+  fromArrayBuffer: (buf: ArrayBuffer, urlSafe?: boolean) => string;
   toArrayBuffer: (s: string) => ArrayBuffer;
 };
 
@@ -20,21 +20,25 @@ if (!isLoaded()) {
   }
 }
 
-export function encode(s: string) {
-  return FastBase64.encode(s);
+export function encode(s: string, urlSafe?: boolean) {
+  return FastBase64.encode(s, urlSafe);
 }
 
 export function decode(s: string) {
   return FastBase64.decode(s);
 }
 
-export function fromByteArray(buf: Uint8Array) {
+export function fromByteArray(buf: Uint8Array, urlSafe?: boolean) {
   if (buf.buffer.byteLength > buf.byteLength || buf.byteOffset > 0) {
     return FastBase64.fromArrayBuffer(
-      buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength)
+      buf.buffer.slice(
+        buf.byteOffset,
+        buf.byteOffset + buf.byteLength
+      ) as ArrayBuffer,
+      urlSafe
     );
   }
-  return FastBase64.fromArrayBuffer(buf.buffer);
+  return FastBase64.fromArrayBuffer(buf.buffer as ArrayBuffer, urlSafe);
 }
 
 export function toByteArray(s: string) {

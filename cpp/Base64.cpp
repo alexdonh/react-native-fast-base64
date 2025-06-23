@@ -1,118 +1,126 @@
 #include "Base64.h"
+#include <string>
+#include <vector>
+#include <cstring>
 
 namespace Base64 {
-    static const uint8_t from_base64[128] = {
-        // 8 rows of 16 = 128
-        // Note: only requires 123 entries, as we only lookup for <= z , which z=122
+
+    static constexpr char std_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static constexpr char url_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+    // Fast decode table: 255 = invalid
+    static const uint8_t decode_table[256] = {
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
         255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,  62, 255,  62, 255,  63,
-        52,   53,  54,  55,  56,  57,  58,  59,  60,  61, 255, 255,   0, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,  62, 255, 255, 255,  63,
+         52,  53,  54,  55,  56,  57,  58,  59,  60,  61, 255, 255, 255,  64, 255, 255,
         255,   0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
-        15,   16,  17,  18,  19,  20,  21,  22,  23,  24,  25, 255, 255, 255, 255,  63,
+         15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25, 255, 255, 255, 255, 255,
         255,  26,  27,  28,  29,  30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,
-        41,   42,  43,  44,  45,  46,  47,  48,  49,  50,  51, 255, 255, 255, 255, 255
+         41,  42,  43,  44,  45,  46,  47,  48,  49,  50,  51, 255, 255, 255, 255, 255,
+        // rest is 255
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
     };
 
-    static const char to_base64[65] =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789+/";
+    std::string encode(const uint8_t* data, size_t len, bool urlSafe) {
+        if (!data || len == 0) return {};
 
-    std::string encode(const std::string& buf)
-    {
-        if (buf.empty())
-            return encode(nullptr, 0);
-        else
-            return encode(reinterpret_cast<uint8_t const*>(&buf[0]), buf.size());
-    }
+        const char* chars = urlSafe ? url_chars : std_chars;
+        size_t outLen = ((len + 2) / 3) * 4;
+        std::string out;
+        out.reserve(outLen);
 
-    std::string encode(const std::vector<uint8_t>& buf)
-    {
-        if (buf.empty())
-            return encode(nullptr, 0);
-        else
-            return encode(&buf[0], buf.size());
-    }
-
-    std::string encode(const uint8_t* buf, unsigned int bufLen)
-    {
-        // Calculate how many bytes that needs to be added to get a multiple of 3
-        size_t missing = 0;
-        size_t ret_size = bufLen;
-        while ((ret_size%3)!=0)
-        {
-            ++ret_size;
-            ++missing;
+        size_t i = 0;
+        for (; i + 2 < len; i += 3) {
+            uint32_t v = (static_cast<uint32_t>(data[i]) << 16) |
+                         (static_cast<uint32_t>(data[i + 1]) << 8) |
+                          static_cast<uint32_t>(data[i + 2]);
+            out.push_back(chars[(v >> 18) & 0x3F]);
+            out.push_back(chars[(v >> 12) & 0x3F]);
+            out.push_back(chars[(v >> 6) & 0x3F]);
+            out.push_back(chars[v & 0x3F]);
         }
 
-        // Expand the return string size to a multiple of 4
-        ret_size = 4*ret_size/3;
-
-        std::string ret;
-        ret.reserve(ret_size);
-
-        for (unsigned int i=0; i<ret_size/4; ++i)
-        {
-            // Read a group of three bytes (avoid buffer overrun by replacing with 0)
-            const size_t index = i*3;
-            const uint8_t b3_0 = (index+0 < bufLen) ? buf[index+0] : 0;
-            const uint8_t b3_1 = (index+1 < bufLen) ? buf[index+1] : 0;
-            const uint8_t b3_2 = (index+2 < bufLen) ? buf[index+2] : 0;
-
-            // Transform into four base 64 characters
-            const uint8_t b4_0 =                        ((b3_0 & 0xfc) >> 2);
-            const uint8_t b4_1 = ((b3_0 & 0x03) << 4) + ((b3_1 & 0xf0) >> 4);
-            const uint8_t b4_2 = ((b3_1 & 0x0f) << 2) + ((b3_2 & 0xc0) >> 6);
-            const uint8_t b4_3 = ((b3_2 & 0x3f) << 0);
-
-            // Add the base 64 characters to the return value
-            ret.push_back(to_base64[b4_0]);
-            ret.push_back(to_base64[b4_1]);
-            ret.push_back(to_base64[b4_2]);
-            ret.push_back(to_base64[b4_3]);
+        // Handle tail
+        if (i < len) {
+            uint32_t v = static_cast<uint32_t>(data[i]) << 16;
+            out.push_back(chars[(v >> 18) & 0x3F]);
+            if (i + 1 < len) {
+                v |= static_cast<uint32_t>(data[i + 1]) << 8;
+                out.push_back(chars[(v >> 12) & 0x3F]);
+                out.push_back(chars[(v >> 6) & 0x3F]);
+                out.push_back('=');
+            } else {
+                out.push_back(chars[(v >> 12) & 0x3F]);
+                out.push_back('=');
+                out.push_back('=');
+            }
         }
 
-        // Replace data that is invalid (always as many as there are missing bytes)
-        for (size_t i=0; i<missing; ++i)
-            ret[ret_size - i - 1] = '=';
+        // Remove padding if urlSafe
+        if (urlSafe) {
+            while (!out.empty() && out.back() == '=') out.pop_back();
+        }
 
-        return ret;
+        return out;
     }
 
-    std::string decode(const std::string& encoded_string)
-    {
-        // Make sure the *intended* string length is a multiple of 4
-        size_t encoded_size = encoded_string.size();
+    std::string decode(const std::string& encoded) {
+        size_t len = encoded.size();
+        // Strip any trailing padding
+        while (len > 0 && (encoded[len - 1] == '=' || encoded[len - 1] == '.')) --len;
+        if (len == 0) return {};
 
-        while ((encoded_size % 4) != 0)
-            ++encoded_size;
+        size_t out_len = (len * 3) / 4;
+        std::string result;
+        result.reserve(out_len);
 
-        const size_t n = encoded_string.size();
-        std::string ret;
-        ret.reserve(3*encoded_size/4);
+        size_t i = 0;
+        while (i + 4 <= len) {
+            uint8_t a = decode_table[static_cast<uint8_t>(encoded[i])];
+            uint8_t b = decode_table[static_cast<uint8_t>(encoded[i + 1])];
+            uint8_t c = decode_table[static_cast<uint8_t>(encoded[i + 2])];
+            uint8_t d = decode_table[static_cast<uint8_t>(encoded[i + 3])];
 
-        for (size_t i=0; i<encoded_size; i += 4)
-        {
-            // Note: 'z' == 122
+            if (a == 255 || b == 255 || c == 255 || d == 255) return {};
 
-            // Get values for each group of four base 64 characters
-            const uint8_t b4_0 = (            encoded_string[i+0] <= 'z') ? from_base64[encoded_string[i+0]] : 0xff;
-            const uint8_t b4_1 = (i+1 < n and encoded_string[i+1] <= 'z') ? from_base64[encoded_string[i+1]] : 0xff;
-            const uint8_t b4_2 = (i+2 < n and encoded_string[i+2] <= 'z') ? from_base64[encoded_string[i+2]] : 0xff;
-            const uint8_t b4_3 = (i+3 < n and encoded_string[i+3] <= 'z') ? from_base64[encoded_string[i+3]] : 0xff;
+            uint32_t triple = (a << 18) | (b << 12) | (c << 6) | d;
+            result.push_back((triple >> 16) & 0xFF);
+            result.push_back((triple >> 8) & 0xFF);
+            result.push_back(triple & 0xFF);
 
-            // Transform into a group of three bytes
-            const uint8_t b3_0 = ((b4_0 & 0x3f) << 2) + ((b4_1 & 0x30) >> 4);
-            const uint8_t b3_1 = ((b4_1 & 0x0f) << 4) + ((b4_2 & 0x3c) >> 2);
-            const uint8_t b3_2 = ((b4_2 & 0x03) << 6) + ((b4_3 & 0x3f) >> 0);
-
-            // Add the byte to the return value if it isn't part of an '=' character (indicated by 0xff)
-            if (b4_1 != 0xff) ret.push_back(b3_0);
-            if (b4_2 != 0xff) ret.push_back(b3_1);
-            if (b4_3 != 0xff) ret.push_back(b3_2);
+            i += 4;
         }
 
-        return ret;
+        // Tail: up to 3 bytes
+        if (i < len) {
+            uint8_t a = decode_table[static_cast<uint8_t>(encoded[i])];
+            if (a == 255) return {};
+            uint8_t b = (i + 1 < len) ? decode_table[static_cast<uint8_t>(encoded[i + 1])] : 0;
+            if ((i + 1 < len) && b == 255) return {};
+
+            uint8_t c = (i + 2 < len) ? decode_table[static_cast<uint8_t>(encoded[i + 2])] : 0;
+            if ((i + 2 < len) && c == 255) return {};
+
+            // At least two base64 chars required for 1 byte
+            result.push_back((a << 2) | (b >> 4));
+            if (i + 2 < len) {
+                // 2 more base64 chars for a second byte
+                result.push_back(((b & 0x0F) << 4) | (c >> 2));
+                if (i + 3 < len) {
+                    uint8_t d = decode_table[static_cast<uint8_t>(encoded[i + 3])];
+                    if (d == 255) return {};
+                    result.push_back(((c & 0x03) << 6) | d);
+                }
+            }
+        }
+        return result;
     }
 }
